@@ -1,7 +1,7 @@
 """
 ===========================================
   SHOPEE AFFILIATE AUTO POST BOT - WEB
-  Flask + APScheduler + Gemini + Composio
+  Flask + APScheduler + Groq + Composio
 ===========================================
 """
 
@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 log = logging.getLogger(__name__)
 
 # ── Config ───────────────────────────────────────────────────
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_API_KEY     = os.getenv("GROQ_API_KEY", "")
 COMPOSIO_API_KEY = os.getenv("COMPOSIO_API_KEY", "")
 ENTITY_ID        = os.getenv("COMPOSIO_ENTITY_ID", "default")
 POST_HOUR_1      = int(os.getenv("POST_HOUR_1", "11"))
@@ -84,7 +84,7 @@ def save_history(entry):
     with open(HISTORY_FILE, "w", encoding="utf-8") as f:
         json.dump(history[:200], f, ensure_ascii=False, indent=2)
 
-# ── Generate content ─────────────────────────────────────────
+# ── Generate content via Groq ─────────────────────────────────
 def generate_post_content():
     client = Groq(api_key=GROQ_API_KEY)
     category = random.choice(SHOPEE_CATEGORIES)
@@ -108,17 +108,17 @@ YÊU CẦU:
 
 CHỈ trả về nội dung bài viết, không giải thích."""
 
-    add_log(f"🤖 Gemini đang tạo content cho: {category}")
+    add_log(f"🤖 Groq đang tạo content cho: {category}")
     response = client.chat.completions.create(
-    model="llama-3.3-70b-versatile",
-    messages=[{"role": "user", "content": prompt}],
-    max_tokens=1000,
-)
-content = response.choices[0].message.content.strip()
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=1000,
+    )
+    content = response.choices[0].message.content.strip()
     add_log(f"✅ Tạo content xong ({len(content)} ký tự)")
     return content, category
 
-# ── Generate image ────────────────────────────────────────────
+# ── Generate image via Pollinations ──────────────────────────
 def generate_image_url(category):
     prompts = {
         "điện thoại": "modern smartphone product photography white background professional",
@@ -147,7 +147,7 @@ def generate_image_url(category):
     add_log(f"🎨 Tạo ảnh AI: seed={seed}")
     return url
 
-# ── Post to Facebook ──────────────────────────────────────────
+# ── Post to Facebook via Composio ────────────────────────────
 def post_to_facebook(content, image_url):
     try:
         client = Composio(api_key=COMPOSIO_API_KEY)
@@ -159,15 +159,14 @@ def post_to_facebook(content, image_url):
             params={"message": content, "url": image_url}
         )
         if result and result.get("successfull", False):
-            add_log("🎉 Đăng bài thành công!", "info")
+            add_log("🎉 Đăng bài thành công!")
             return True
 
-        # fallback text post
         result2 = entity.execute(
             action=Action.FACEBOOK_CREATE_POST,
             params={"message": f"{content}\n\n📸 {image_url}"}
         )
-        add_log(f"📝 Fallback post: {result2}", "info")
+        add_log(f"📝 Fallback post hoàn tất")
         return True
     except Exception as e:
         add_log(f"❌ Lỗi Composio: {e}", "error")
@@ -230,7 +229,7 @@ def api_status():
 
 @app.route("/api/start", methods=["POST"])
 def api_start():
-    if not GEMINI_API_KEY or not COMPOSIO_API_KEY:
+    if not GROQ_API_KEY or not COMPOSIO_API_KEY:
         return jsonify({"ok": False, "msg": "Thiếu API key! Kiểm tra biến môi trường."})
     start_scheduler()
     return jsonify({"ok": True, "msg": "Bot đã khởi động!"})
@@ -245,7 +244,7 @@ def api_stop():
 
 @app.route("/api/post-now", methods=["POST"])
 def api_post_now():
-    if not GEMINI_API_KEY or not COMPOSIO_API_KEY:
+    if not GROQ_API_KEY or not COMPOSIO_API_KEY:
         return jsonify({"ok": False, "msg": "Thiếu API key!"})
     import threading
     threading.Thread(target=run_post_job).start()
@@ -259,8 +258,8 @@ def api_history():
 def api_logs():
     return jsonify(bot_status["logs"])
 
-# ── Start on init ─────────────────────────────────────────────
+# ── Start ─────────────────────────────────────────────────────
 if __name__ == "__main__":
-    if GEMINI_API_KEY and COMPOSIO_API_KEY:
+    if GROQ_API_KEY and COMPOSIO_API_KEY:
         start_scheduler()
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
