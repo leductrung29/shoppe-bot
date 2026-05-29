@@ -1,0 +1,8 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+bot.log
+posts_history.json
+.DS_Store
+venv/

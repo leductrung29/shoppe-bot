@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shopee Bot Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c26;
+    --border: #2a2a38;
+    --orange: #ff6b2b;
+    --orange2: #ff9a5c;
+    --green: #00e676;
+    --red: #ff4444;
+    --yellow: #ffd600;
+    --text: #f0f0f5;
+    --muted: #6b6b80;
+    --glow: 0 0 30px rgba(255,107,43,0.2);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background effect */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; left: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(255,107,43,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* Header */
+  header {
+    padding: 28px 0 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, var(--orange), #ff3300);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    box-shadow: var(--glow);
+  }
+  .logo-text { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+  .logo-sub { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 1px; }
+  .status-badge {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 16px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    font-size: 13px; font-weight: 500;
+    background: var(--surface);
+  }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--muted);
+    transition: all 0.3s;
+  }
+  .status-dot.active { background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+
+  /* Stats row */
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 28px 0; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 24px;
+    position: relative; overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: var(--orange); }
+  .stat-card::after {
+    content: '';
+    position: absolute; top: 0; right: 0;
+    width: 80px; height: 80px;
+    background: radial-gradient(circle, rgba(255,107,43,0.08), transparent);
+    border-radius: 50%;
+    transform: translate(20px, -20px);
+  }
+  .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .stat-value { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; color: var(--orange); }
+  .stat-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* Main grid */
+  .main-grid { display: grid; grid-template-columns: 1fr 380px; gap: 20px; }
+
+  /* Panel */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .panel-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
+  .panel-body { padding: 20px 24px; }
+
+  /* Controls */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 22px;
+    border-radius: 10px;
+    border: none; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--orange), #e55a20);
+    color: white;
+    box-shadow: 0 4px 15px rgba(255,107,43,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,107,43,0.4); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-ghost {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-ghost:hover { border-color: var(--orange); color: var(--orange); }
+  .btn-danger { background: rgba(255,68,68,0.15); border: 1px solid rgba(255,68,68,0.3); color: var(--red); }
+  .btn-danger:hover { background: rgba(255,68,68,0.25); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* Next post timer */
+  .next-post-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 16px 0;
+  }
+  .next-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .next-times { display: flex; gap: 10px; flex-wrap: wrap; }
+  .time-chip {
+    background: rgba(255,107,43,0.1);
+    border: 1px solid rgba(255,107,43,0.2);
+    color: var(--orange2);
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+  }
+
+  /* Last post preview */
+  .last-post-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 16px;
+  }
+  .last-post-img { width: 100%; height: 140px; object-fit: cover; background: var(--border); }
+  .last-post-img-placeholder {
+    width: 100%; height: 140px;
+    background: var(--border);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); font-size: 30px;
+  }
+  .last-post-text { padding: 14px 16px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .last-post-time { font-size: 11px; color: var(--muted); margin-top: 8px; opacity: 0.6; }
+
+  /* Log */
+  .log-list { max-height: 320px; overflow-y: auto; }
+  .log-list::-webkit-scrollbar { width: 4px; }
+  .log-list::-webkit-scrollbar-track { background: transparent; }
+  .log-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .log-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 13px; line-height: 1.4;
+  }
+  .log-item:last-child { border-bottom: none; }
+  .log-time { color: var(--muted); font-size: 11px; white-space: nowrap; margin-top: 2px; font-family: monospace; }
+  .log-msg { flex: 1; }
+  .log-item.error .log-msg { color: var(--red); }
+  .log-item.warning .log-msg { color: var(--yellow); }
+
+  /* History */
+  .history-list { max-height: 280px; overflow-y: auto; }
+  .history-item {
+    display: flex; gap: 12px; align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .history-item:last-child { border-bottom: none; }
+  .history-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    margin-top: 4px;
+  }
+  .history-dot.ok { background: var(--green); }
+  .history-dot.fail { background: var(--red); }
+  .history-info { flex: 1; min-width: 0; }
+  .history-preview { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .history-meta { font-size: 11px; color: var(--muted); opacity: 0.5; margin-top: 2px; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 14px;
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 100;
+    max-width: 300px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: rgba(0,230,118,0.3); }
+  .toast.error { border-color: rgba(255,68,68,0.3); }
+
+  /* Spinner */
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .stats-row .stat-card:last-child { grid-column: span 2; }
+  }
+
+  .empty-state { text-align: center; color: var(--muted); padding: 32px; font-size: 13px; }
+  .empty-icon { font-size: 28px; margin-bottom: 8px; }
+  
+  .badge { 
+    display: inline-block; padding: 3px 8px; border-radius: 6px;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .badge-orange { background: rgba(255,107,43,0.15); color: var(--orange2); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🛒</div>
+      <div>
+        <div class="logo-text">Shopee Bot</div>
+        <div class="logo-sub">Affiliate Auto Post</div>
+      </div>
+    </div>
+    <div class="status-badge">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Đang tải...</span>
+    </div>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Tổng bài đã tạo</div>
+      <div class="stat-value" id="totalPosts">0</div>
+      <div class="stat-sub">Kể từ khi khởi động</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Đăng thành công</div>
+      <div class="stat-value" id="successPosts">0</div>
+      <div class="stat-sub">Lên Fanpage</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Lần đăng cuối</div>
+      <div class="stat-value" style="font-size:18px; padding-top:8px;" id="lastPostTime">—</div>
+      <div class="stat-sub" id="lastPostAgo"></div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+    <!-- Left column -->
+    <div style="display:flex; flex-direction:column; gap:20px;">
+
+      <!-- Controls -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">⚙️ Điều khiển Bot</span>
+          <span class="badge badge-orange">11:30 & 20:00 mỗi ngày</span>
+        </div>
+        <div class="panel-body">
+          <div class="controls">
+            <button class="btn btn-primary" id="btnStart" onclick="startBot()">
+              <div class="spinner" id="spinStart"></div>
+              ▶ Khởi động Bot
+            </button>
+            <button class="btn btn-danger" id="btnStop" onclick="stopBot()">
+              ⏸ Dừng Bot
+            </button>
+            <button class="btn btn-ghost" id="btnPostNow" onclick="postNow()">
+              <div class="spinner" id="spinPost"></div>
+              ⚡ Đăng ngay 1 bài
+            </button>
+          </div>
+
+          <div class="next-post-box">
+            <div class="next-label">Lịch đăng tiếp theo</div>
+            <div class="next-times" id="nextTimes">
+              <span style="color:var(--muted); font-size:13px;">Chưa khởi động...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Log -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">📋 Nhật ký hoạt động</span>
+          <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="refreshLogs()">Làm mới</button>
+        </div>
+        <div class="panel-body" style="padding:12px 20px;">
+          <div class="log-list" id="logList">
+            <div class="empty-state"><div class="empty-icon">📭</div>Chưa có log nào</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- History -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">🕐 Lịch sử bài đăng</span>
+        </div>
+        <div class="panel-body" style="padding:12px 20px;">
+          <div class="history-list" id="historyList">
+            <div class="empty-state"><div class="empty-icon">📂</div>Chưa có bài nào được đăng</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div style="display:flex; flex-direction:column; gap:20px;">
+
+      <!-- Last post preview -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">🖼️ Bài đăng gần nhất</span>
+        </div>
+        <div id="lastPostCard">
+          <div class="empty-state" style="padding:40px 20px;">
+            <div class="empty-icon">✨</div>
+            Chưa có bài đăng nào.<br>Nhấn "Đăng ngay" để test!
+          </div>
+        </div>
+      </div>
+
+      <!-- Info box -->
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">ℹ️ Thông tin</span></div>
+        <div class="panel-body" style="font-size:13px; line-height:1.8; color:var(--muted);">
+          <p>🤖 <b style="color:var(--text)">Gemini Pro</b> tự viết content GenZ</p>
+          <p>🎨 <b style="color:var(--text)">Pollinations AI</b> tạo ảnh miễn phí</p>
+          <p>📤 <b style="color:var(--text)">Composio</b> đăng lên Fanpage</p>
+          <br>
+          <p>⏰ Đăng tự động lúc:</p>
+          <p style="color:var(--orange2); font-family:'Syne',sans-serif; font-weight:700; font-size:16px; margin: 4px 0;">11:30 &nbsp;•&nbsp; 20:00</p>
+          <p style="font-size:11px;">Múi giờ: Asia/Ho_Chi_Minh</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+let refreshInterval;
+
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+function setSpinner(id, show) {
+  document.getElementById(id).style.display = show ? 'block' : 'none';
+}
+
+async function fetchStatus() {
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    updateUI(d);
+  } catch(e) { console.error(e); }
+}
+
+function updateUI(d) {
+  // Status badge
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusText');
+  if (d.running && d.scheduler_running) {
+    dot.className = 'status-dot active';
+    txt.textContent = 'Bot đang chạy';
+  } else {
+    dot.className = 'status-dot';
+    txt.textContent = 'Bot đã dừng';
+  }
+
+  // Stats
+  document.getElementById('totalPosts').textContent = d.total_posts || 0;
+  document.getElementById('successPosts').textContent = d.success_posts || 0;
+  document.getElementById('lastPostTime').textContent = d.last_post_time || '—';
+
+  // Next run times
+  const nextEl = document.getElementById('nextTimes');
+  if (d.next_runs && d.next_runs.length > 0) {
+    nextEl.innerHTML = d.next_runs.map(t => {
+      const dt = new Date(t);
+      const hm = dt.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'});
+      const date = dt.toLocaleDateString('vi-VN', {day:'2-digit', month:'2-digit'});
+      return `<span class="time-chip">📅 ${hm} – ${date}</span>`;
+    }).join('');
+  } else if (!d.running) {
+    nextEl.innerHTML = '<span style="color:var(--muted); font-size:13px;">Chưa khởi động...</span>';
+  }
+
+  // Last post preview
+  if (d.last_post_preview) {
+    document.getElementById('lastPostCard').innerHTML = `
+      ${d.last_image_url 
+        ? `<img class="last-post-img" src="${d.last_image_url}" onerror="this.style.display='none'" />`
+        : `<div class="last-post-img-placeholder">🖼️</div>`
+      }
+      <div class="last-post-text">${d.last_post_preview}</div>
+      <div class="last-post-time" style="padding:0 16px 14px;">🕐 ${d.last_post_time || ''}</div>
+    `;
+  }
+}
+
+async function fetchLogs() {
+  try {
+    const r = await fetch('/api/logs');
+    const logs = await r.json();
+    const el = document.getElementById('logList');
+    if (!logs.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div>Chưa có log nào</div>';
+      return;
+    }
+    el.innerHTML = logs.map(l => `
+      <div class="log-item ${l.level === 'error' ? 'error' : ''}">
+        <span class="log-time">${l.time}</span>
+        <span class="log-msg">${l.msg}</span>
+      </div>
+    `).join('');
+  } catch(e) {}
+}
+
+async function fetchHistory() {
+  try {
+    const r = await fetch('/api/history');
+    const history = await r.json();
+    const el = document.getElementById('historyList');
+    if (!history.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">📂</div>Chưa có bài nào</div>';
+      return;
+    }
+    el.innerHTML = history.slice(0, 20).map(h => `
+      <div class="history-item">
+        <div class="history-dot ${h.success ? 'ok' : 'fail'}"></div>
+        <div class="history-info">
+          <div class="history-preview">${h.preview || ''}</div>
+          <div class="history-meta">${h.category || ''} • ${h.time || ''}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {}
+}
+
+function refreshLogs() { fetchLogs(); fetchHistory(); }
+
+async function startBot() {
+  setSpinner('spinStart', true);
+  document.getElementById('btnStart').disabled = true;
+  try {
+    const r = await fetch('/api/start', {method:'POST'});
+    const d = await r.json();
+    showToast(d.msg, d.ok ? 'success' : 'error');
+    await fetchStatus();
+  } finally {
+    setSpinner('spinStart', false);
+    document.getElementById('btnStart').disabled = false;
+  }
+}
+
+async function stopBot() {
+  const r = await fetch('/api/stop', {method:'POST'});
+  const d = await r.json();
+  showToast(d.msg);
+  fetchStatus();
+}
+
+async function postNow() {
+  setSpinner('spinPost', true);
+  document.getElementById('btnPostNow').disabled = true;
+  showToast('⚡ Đang tạo bài, chờ ~30 giây...', 'info');
+  try {
+    const r = await fetch('/api/post-now', {method:'POST'});
+    const d = await r.json();
+    showToast(d.msg, d.ok ? 'success' : 'error');
+    setTimeout(() => { fetchStatus(); fetchLogs(); fetchHistory(); }, 35000);
+  } finally {
+    setTimeout(() => {
+      setSpinner('spinPost', false);
+      document.getElementById('btnPostNow').disabled = false;
+    }, 35000);
+  }
+}
+
+// Init
+fetchStatus();
+fetchLogs();
+fetchHistory();
+refreshInterval = setInterval(() => { fetchStatus(); fetchLogs(); }, 15000);
+</script>
+</body>
+</html>
