@@ -10,7 +10,7 @@ from datetime import datetime
 from flask import Flask, render_template, jsonify, request
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-import google.generativeai as genai
+from groq import Groq
 from composio import Composio, Action
 from dotenv import load_dotenv
 
@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 log = logging.getLogger(__name__)
 
 # ── Config ───────────────────────────────────────────────────
-GEMINI_API_KEY   = os.getenv("GEMINI_API_KEY", "")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 COMPOSIO_API_KEY = os.getenv("COMPOSIO_API_KEY", "")
 ENTITY_ID        = os.getenv("COMPOSIO_ENTITY_ID", "default")
 POST_HOUR_1      = int(os.getenv("POST_HOUR_1", "11"))
@@ -86,8 +86,7 @@ def save_history(entry):
 
 # ── Generate content ─────────────────────────────────────────
 def generate_post_content():
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel("gemini-2.0-flash")
+    client = Groq(api_key=GROQ_API_KEY)
     category = random.choice(SHOPEE_CATEGORIES)
     month = datetime.now().strftime("%m/%Y")
 
@@ -110,8 +109,12 @@ YÊU CẦU:
 CHỈ trả về nội dung bài viết, không giải thích."""
 
     add_log(f"🤖 Gemini đang tạo content cho: {category}")
-    response = model.generate_content(prompt)
-    content = response.text.strip()
+    response = client.chat.completions.create(
+    model="llama-3.3-70b-versatile",
+    messages=[{"role": "user", "content": prompt}],
+    max_tokens=1000,
+)
+content = response.choices[0].message.content.strip()
     add_log(f"✅ Tạo content xong ({len(content)} ký tự)")
     return content, category
 
